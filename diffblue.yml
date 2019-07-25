@@ -1,0 +1,386 @@
+buildCmd: mvn -e -X -Dlicense.skip=true -Dmaven.enforcer.skip=true  -Denforcer.skip=true -Dair.check.skip-all=true -Dmaven.test.skip=true compile
+testCmd: true
+skipVerification: true
+# Copyright 2019 Diffblue Limited. All Rights Reserved.
+cbmcArguments:
+  # Do not generate coverage comments on generated tests.
+  java-generate-no-comments: true
+  # Constrain the size of arrays created in the analyzed code.
+  java-max-vla-length: 100000
+phases:
+  -
+    # Phase 0 PRETTY, SIMPLE and SMART - pretty tests, do not test private methods directly, Smart-Harness
+    timeout: 180
+    cbmcArguments:
+      # Use simple models first containers (ArrayList, HashMap, HashSet,...) will have a maximum size of one.
+      classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
+      # Set a limit on the number of instructions that can be generated as part of a test trace.
+      depth: 1500
+      # Maximum allowed length for an array passed as test input.
+      max-nondet-array-length: 10
+      # Bound the length of input strings.
+      max-nondet-string-length: 10
+      # Add constraint that strings are printable
+      string-printable: true
+      # Make implicit runtime exceptions explicit.
+      throw-runtime-exceptions: false
+      # Set an upper bound on loop unwinding.
+      unwind: 1
+      # Do not test any methods that have the specified access level.
+      do-not-test-methods-with-access: [private]
+      # Instrument the entry point function only.
+      cover-function-only: false
+      # Instrument the file as opposed to the function only
+      cover-only: file
+      # Set string input value
+      string-input-value: ["foo", "Bar", "BAZ", "1234", "1a 2b 3c", "A1B2C3", "a,b,c", "1", "2", "3", "a/b/c", "a'b'c", ",", "/", "'"]
+      # Instantiate classes using the simplest constructor strategy
+      smart-harness: simplest-constructor-and-nondet
+  -
+    # Phase 1 PRETTY AND COMPLEX - standard models only, pretty tests, do not test private methods directly, input factory
+    timeout: 180
+    cbmcArguments:
+      # Use the standard models library
+      classpath: '/tools/cbmc/models.jar:.'
+      # Set a limit on the number of instructions that can be generated as part of a test trace.
+      depth: false
+      # never initialize reference-typed parameter to the entry point with null
+      java-assume-inputs-non-null: true
+      # Maximum allowed length for an array passed as test input.
+      max-nondet-array-length: 10
+      # Bound the length of input strings.
+      max-nondet-string-length: 10
+      # Add constraint that strings are printable
+      string-printable: true
+      # Set string input value
+      string-input-value: ["foo", "Bar", "BAZ", "1234", "1a 2b 3c", "A1B2C3", "a,b,c", "1", "2", "3", "a/b/c", "a'b'c", ",", "/", "'"]
+      # Make implicit runtime exceptions explicit.
+      throw-runtime-exceptions: false
+      # Set an upper bound on loop unwinding.
+      unwind: 2
+      # Do not test any methods that have the specified access level.
+      do-not-test-methods-with-access: [private]
+      # Instrument the entry point function only.
+      cover-function-only: false
+      # instrument the file as opposed to the function only
+      cover-only: file
+      # Limit input factory recursive depth (default 0 = no recursion allowed)
+      java-test-input-factory-bmc-recursion-limit: 4
+  -
+    # Phase 2 FIFO Strategy - pretty tests, do not test private methods directly, fifo
+    timeout: 100
+    cbmcArguments:
+      # Use the standard models library
+      classpath: '/tools/cbmc/models.jar:.'
+      # Set a limit on the number of instructions that can be generated as part of a test trace.
+      depth: false
+      # never initialize reference-typed parameter to the entry point with null
+      java-assume-inputs-non-null: true
+      # Maximum allowed length for an array passed as test input.
+      max-nondet-array-length: 30
+      # Add constraint that strings are printable
+      max-nondet-string-length: 100
+      # Explores the program tree breadth-first.
+      paths: fifo
+      # Set string input value
+      string-input-value: ["foo", "Bar", "BAZ", "1234", "1a 2b 3c", "A1B2C3", "a,b,c", "1", "2", "3", "a/b/c", "a'b'c", ",", "/", "'"]
+      # Add constraint that strings are printable
+      string-printable: true
+      # Make implicit runtime exceptions explicit.
+      throw-runtime-exceptions: false
+      # Set an upper bound on loop unwinding.
+      unwind: false
+      # Do not test any methods that have the specified access level.
+      do-not-test-methods-with-access: [private]
+      # Instrument the entry point function only.
+      cover-function-only: false
+      # instrument the file as opposed to the function only
+      cover-only: file
+  -
+    # Phase 3 Exceptions - do not test private methods directly
+    timeout: 180
+    cbmcArguments:
+      # Use simple models containers first (ArrayList, HashMap, HashSet,...) will have a maximum size of one.
+      classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
+      # Set a limit on the number of instructions that can be generated as part of a test trace.
+      depth: false
+      # Maximum allowed length for an array passed as test input.
+      max-nondet-array-length: 30
+      # Bound the length of input strings.
+      max-nondet-string-length: 30
+      # Add constraint that strings are printable
+      string-printable: false
+      # Make implicit runtime exceptions explicit.
+      throw-runtime-exceptions: true
+      # Set an upper bound on loop unwinding.
+      unwind: 3
+      # Do not test any methods that have the specified access level.
+      do-not-test-methods-with-access: [private]
+      # Instrument the entry point function only.
+      cover-function-only: false
+      # instrument the file as opposed to the function only
+      cover-only: file
+  -
+    # Phase 4 Direct testing - test private methods directly, increased reflection
+    timeout: 180
+    cbmcArguments:
+      # Use simple models containers first (ArrayList, HashMap, HashSet,...) will have a maximum size of one.
+      classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
+      # Set a limit on the number of instructions that can be generated as part of a test trace.
+      depth: 1500
+      # never initialize reference-typed parameter to the entry point with null
+      java-assume-inputs-non-null: true
+      # Maximum allowed length for an array passed as test input.
+      max-nondet-array-length: 10
+      # Bound the length of input strings.
+      max-nondet-string-length: 10
+      # Add constraint that strings are printable
+      string-printable: true
+      # Make implicit runtime exceptions explicit.
+      throw-runtime-exceptions: false
+      # Set an upper bound on loop unwinding.
+      unwind: 1
+      # Set string input value
+      string-input-value: ["foo", "Bar", "BAZ", "1234", "1a 2b 3c", "A1B2C3", "a,b,c", "1", "2", "3", "a/b/c", "a'b'c", ",", "/", "'"]
+      # If the logs contain output of the following then proceed to phase X
+    nextPhase:
+      # If the function is not analysable then do not pass onto the next phase
+      not_analyzed: null
+  -
+    # PHASE 5 Mocking - aggressive mocking, do not test private methods directly
+    timeout: 180
+    cbmcArguments:
+      # Use simple models containers first (ArrayList, HashMap, HashSet,...) will have a maximum size of one.
+      classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
+      # Set a limit on the number of instructions that can be generated as part of a test trace.
+      depth: 3000
+      # never initialize reference-typed parameter to the entry point with null
+      java-assume-inputs-non-null: true
+      # Only load the class (and related inner/outer classes) containing the method under test,
+      load-containing-class-only: true
+      # Maximum allowed length for an array passed as test input.
+      max-nondet-array-length: 30
+      # Bound the length of input strings.
+      max-nondet-string-length: 100
+      # Add constraint that strings are printable
+      string-printable: false
+      # Make implicit runtime exceptions explicit.
+      throw-runtime-exceptions: true
+      # Set an upper bound on loop unwinding.
+      unwind: 3
+      # Do not test any methods that have the specified access level.
+      do-not-test-methods-with-access: [private]
+      # Instrument the entry point function only.
+      cover-function-only: false
+      # instrument the file as opposed to the function only
+      cover-only: file
+units:
+ - target:
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/util/StringUtil.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/util/StringUtil.java
+ - target:
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/query/impl/getters/ReflectionHelper.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/query/impl/getters/ReflectionHelper.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/util/Preconditions.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/util/Preconditions.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/query/impl/AttributeType.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/query/impl/AttributeType.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/query/impl/predicates/PredicateUtils.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/query/impl/predicates/PredicateUtils.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/query/impl/getters/MultiResult.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/query/impl/getters/MultiResult.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/query/impl/getters/Getter.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/query/impl/getters/Getter.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/query/QueryConstants.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/query/QueryConstants.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/query/QueryException.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/query/QueryException.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/core/HazelcastException.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/core/HazelcastException.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/util/CollectionUtil.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/util/CollectionUtil.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/query/impl/getters/ThisGetter.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/query/impl/getters/ThisGetter.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/instance/impl/OutOfMemoryErrorDispatcher.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/instance/impl/OutOfMemoryErrorDispatcher.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/query/impl/getters/GetterFactory$Constructor.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/query/impl/getters/GetterFactory.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/query/impl/getters/GetterFactory.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/query/impl/getters/GetterFactory.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/util/ExceptionUtil$RuntimeExceptionFactory.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/util/ExceptionUtil.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/util/ExceptionUtil.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/util/ExceptionUtil.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/query/impl/getters/AbstractMultiValueGetter.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/query/impl/getters/AbstractMultiValueGetter.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/query/impl/getters/SuffixModifierUtils.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/query/impl/getters/SuffixModifierUtils.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/core/OutOfMemoryHandler.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/core/OutOfMemoryHandler.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/util/EmptyStatement.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/util/EmptyStatement.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/query/impl/getters/GetterFactory$Reader.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/query/impl/getters/GetterFactory.java
+ - target:
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/internal/ascii/memcache/MemcacheCommandProcessor.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/internal/ascii/memcache/MemcacheCommandProcessor.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/internal/ascii/AbstractTextCommandProcessor.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/internal/ascii/AbstractTextCommandProcessor.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/internal/ascii/TextCommandService.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/internal/ascii/TextCommandService.java
+ - target:
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/query/impl/IndexHeapMemoryCostUtil.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/query/impl/IndexHeapMemoryCostUtil.java
+ - target:
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/internal/memory/impl/EndiannessUtil.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/internal/memory/impl/EndiannessUtil.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/internal/memory/ByteAccessStrategy.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/internal/memory/ByteAccessStrategy.java
+ - target:
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/util/QuickMath.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/util/QuickMath.java
+ - target:
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/nio/Protocols.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/nio/Protocols.java
+ - target:
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/util/HashUtil.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/util/HashUtil.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/util/HashUtil$NarrowDirectLoadStrategy.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/util/HashUtil.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/util/HashUtil$LoadStrategy.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/util/HashUtil.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/util/HashUtil$ByteArrayLoadStrategy.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/util/HashUtil.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/util/HashUtil$WideDirectLoadStrategy.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/util/HashUtil.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/util/Preconditions.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/util/Preconditions.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/internal/memory/MemoryAccessor.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/internal/memory/MemoryAccessor.java
+ - target:
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/query/impl/getters/SuffixModifierUtils.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/query/impl/getters/SuffixModifierUtils.java
+ - target:
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/util/AddressUtil.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/util/AddressUtil.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/util/AddressUtil$AddressMatcher.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/util/AddressUtil.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/util/AddressUtil$AddressHolder.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/util/AddressUtil.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/util/AddressUtil$InvalidAddressException.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/util/AddressUtil.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/util/AddressUtil$Ip6AddressMatcher.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/util/AddressUtil.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/util/AddressUtil$Ip4AddressMatcher.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/util/AddressUtil.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/util/EmptyStatement.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/util/EmptyStatement.java
+ - target:
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/util/collection/Hashing.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/util/collection/Hashing.java
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/util/HashUtil.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/util/HashUtil.java
+ - target:
+   - dir: hazelcast/target/classes
+     file: com/hazelcast/query/impl/Numbers.class
+     sourceDir: hazelcast/src/main/java
+     sourceFile: com/hazelcast/query/impl/Numbers.java
+ - target:
+   - dir: hazelcast-build-utils/target/classes
+     file: com/hazelcast/buildutils/ElementParser.class
+     sourceDir: hazelcast-build-utils/src/main/java
+     sourceFile: com/hazelcast/buildutils/ElementParser.java
